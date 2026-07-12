@@ -178,8 +178,7 @@ def render_state_view(region_name, geometry=None):
     fig_anim = go.Figure()
     da_e = get_cropped_3d(ds_evap, mask, 'e')
     if da_e is not None:
-        # Downsample time to just one year (2024) and downsample spatial resolution to keep browser animation lightweight
-        da_e = da_e.sel(time=slice('2024-01-01', '2024-12-31'))
+        # Downsample spatial resolution to keep browser animation lightweight
         da_e = da_e.coarsen(latitude=2, longitude=2, boundary='trim').mean()
         da_e_mm = da_e * -1000 # convert to positive mm
         
@@ -192,7 +191,7 @@ def render_state_view(region_name, geometry=None):
             df_anim, lat='latitude', lon='longitude', z='evap', radius=15,
             animation_frame='month', center=dict(lat=da_e.latitude.mean().item(), lon=da_e.longitude.mean().item()),
             zoom=4.0, mapbox_style="carto-positron", color_continuous_scale="Blues",
-            title="Spatial Evaporation Intensity (2024 Animation, 0.2° grid)"
+            title="Spatial Evaporation Intensity (24-Month Animation, 0.2° grid)"
         )
     fig_anim.update_layout(margin=dict(t=50, b=20, l=20, r=20))
 
@@ -207,7 +206,7 @@ def render_state_view(region_name, geometry=None):
             dbc.Col(dcc.Graph(figure=fig_scatter, config={'displayModeBar': False}), md=6),
         ], className="mb-4"),
         dbc.Row([
-            dbc.Col(dcc.Graph(figure=fig_anim, config={'displayModeBar': False}, style={'height': '60vh'}), md=12),
+            dbc.Col(dcc.Graph(figure=fig_anim, config={'displayModeBar': False, 'scrollZoom': True}, style={'height': '60vh'}), md=12),
         ], className="mb-4"),
         dbc.Row([
             dbc.Col(dcc.Graph(figure=fig_parallel, config={'displayModeBar': False}), md=12),
@@ -216,20 +215,7 @@ def render_state_view(region_name, geometry=None):
             dbc.Col(dcc.Graph(figure=fig_corr, config={'displayModeBar': False}), md=6, className="mx-auto"),
         ], className="mb-4"),
         
-        # Note about missing charts
-        dbc.Row([
-            dbc.Col(
-                dbc.Alert([
-                    html.H5("Note on Missing Visualizations"),
-                    html.P(
-                        "The requested Sankey Diagram (Precipitation Flow) and the full Parallel Coordinates Plot "
-                        "were designed to include 'total_precipitation' and 'surface_runoff'. However, these variables "
-                        "are not present in the current data/ directory. Once the data files are downloaded, they can be "
-                        "easily integrated into this dashboard!"
-                    )
-                ], color="info"), md=10, className="mx-auto"
-            )
-        ])
+
     ])
     
     return layout
